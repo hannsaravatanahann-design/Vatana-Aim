@@ -22,9 +22,12 @@ local playerGui = player:WaitForChild("PlayerGui")
 local ANGKOR_IMAGE_ID = 0
 local DRAGON_IMAGE_ID = 0
 
-local FOV_RADIUS = 120
+local FOV_RADIUS = 500
 local SMOOTHNESS = 15
 local AIM_KEY = Enum.KeyCode.Q
+
+-- Practice NPCs must be inside this folder.
+local TARGET_FOLDER_NAME = "PracticeTargets"
 
 local BLACK = Color3.fromRGB(10, 10, 13)
 local DARK = Color3.fromRGB(23, 23, 28)
@@ -317,7 +320,7 @@ smoothUp.ZIndex = 3
 
 local fovLabel = makeLabel(
     aimPage,
-    "FOV Radius: 120",
+    "FOV Radius: 500",
     UDim2.new(1, -16, 0, 22),
     UDim2.fromOffset(9, 290),
     12
@@ -373,33 +376,33 @@ local statsToggle = makeButton(
 statsToggle.ZIndex = 3
 
 --========================================================
--- FLOATING AIM ICON
+-- FLOATING AIM ICON - SMALLER
 --========================================================
 
 local icon = Instance.new("TextButton")
 icon.Name = "KH_AIM_Icon"
-icon.Size = UDim2.fromOffset(72, 72)
+icon.Size = UDim2.fromOffset(42, 42)
 icon.Position = UDim2.new(0, 24, 0.45, 0)
 icon.BackgroundColor3 = BLACK
 icon.Text = "AIM"
 icon.TextColor3 = GOLD
-icon.TextSize = 18
+icon.TextSize = 12
 icon.Font = Enum.Font.GothamBlack
 icon.Visible = false
 icon.Active = true
 icon.ZIndex = 10
 icon.Parent = gui
 
-addCorner(icon, 36)
+addCorner(icon, 21)
 addStroke(icon, GOLD, 2)
 
 --========================================================
--- REAL DRAGON IMAGE
+-- DRAGON IMAGE
 --========================================================
 
 local dragon = Instance.new("ImageLabel")
 dragon.Name = "FlyingDragon"
-dragon.Size = UDim2.fromOffset(42, 42)
+dragon.Size = UDim2.fromOffset(30, 30)
 dragon.AnchorPoint = Vector2.new(0.5, 0.5)
 dragon.BackgroundTransparency = 1
 dragon.Image = DRAGON_IMAGE_ID ~= 0
@@ -450,13 +453,11 @@ local function updateFOV()
 end
 
 --========================================================
--- COMPACT FPS / MS PANEL
+-- FPS / MS PANEL
 --========================================================
 
 local statsPanel = Instance.new("Frame")
 statsPanel.Name = "PerformancePanel"
-
--- Smaller size: 112 x 25 pixels
 statsPanel.Size = UDim2.fromOffset(112, 25)
 statsPanel.Position = UDim2.new(1, -122, 0, 8)
 statsPanel.BackgroundColor3 = BLACK
@@ -536,7 +537,7 @@ makeDraggable(main, header)
 makeDraggable(statsPanel, statsLabel)
 
 --========================================================
--- DRAGGABLE ICON + TAP TO REOPEN
+-- DRAGGABLE ICON
 --========================================================
 
 local iconDragging = false
@@ -688,12 +689,15 @@ fovDown.Activated:Connect(function()
 end)
 
 fovUp.Activated:Connect(function()
-    FOV_RADIUS = math.min(400, FOV_RADIUS + 10)
+    FOV_RADIUS = math.min(1000, FOV_RADIUS + 10)
     fovLabel.Text = "FOV Radius: " .. FOV_RADIUS
     updateFOV()
 end)
 
--- Input state only; this does not perform automatic targeting.
+--========================================================
+-- TARGET INPUT STATE
+--========================================================
+
 UIS.InputBegan:Connect(function(input, processed)
     if processed then
         return
@@ -791,7 +795,6 @@ end)
 
 local frames = 0
 local elapsed = 0
-local currentFPS = 0
 
 local function getPing()
     local success, value = pcall(function()
@@ -822,12 +825,12 @@ end
 RunService.RenderStepped:Connect(function(deltaTime)
     updateFOV()
 
-    -- Count frames for FPS
     frames += 1
     elapsed += deltaTime
 
     if elapsed >= 1 then
-        currentFPS = math.floor(frames / elapsed)
+        local currentFPS = math.floor(frames / elapsed)
+
         frames = 0
         elapsed = 0
 
@@ -840,14 +843,16 @@ RunService.RenderStepped:Connect(function(deltaTime)
         end
     end
 
-    -- Animate the dragon around the floating AIM icon
+    -- Animate dragon around the smaller floating icon.
     if DRAGON_IMAGE_ID ~= 0 and icon.Visible then
         local t = os.clock() * 1.8
         local center = icon.AbsolutePosition + icon.AbsoluteSize / 2
 
+        local orbitRadius = 30
+
         dragon.Position = UDim2.fromOffset(
-            center.X + math.cos(t) * 48,
-            center.Y + math.sin(t) * 48
+            center.X + math.cos(t) * orbitRadius,
+            center.Y + math.sin(t) * orbitRadius
         )
 
         dragon.Rotation = math.deg(t) + 90
@@ -866,3 +871,4 @@ updateFOV()
 
 print("KH AIM V1.1 loaded successfully!")
 print("Create by Hann Saravatan")
+print("FOV Radius: 500")
